@@ -24,15 +24,15 @@ class Dashboard:
         self._accuracy = False
 
         # VIEW - Components
-        self._loading_gif = None
+        self._LOADING_GIF = None
         self._estimate = widgets.Output()
         self._output = widgets.Output()
 
         # CONTROLLER - Interactivity
-        self._season_select = None
-        self._cluster_select = None
-        self._accuracy_toggle = None
-        self._render_button = None
+        self._SEASON_SELECT = None
+        self._CLUSTER_SELECT = None
+        self._ACCURACY_TOGGLE = None
+        self._RENDER_BUTTON = None
 
         # Assembled components
         self._dashboard = widgets.HBox(children=[self._build_control_pane(), self._build_output_pane()],
@@ -51,10 +51,10 @@ class Dashboard:
     # VIEW: Construct screen representation objects
     def _load_loading_gif(self):
         # create local loading_gif resource for output pane
-        if self._loading_gif is None:
+        if self._LOADING_GIF is None:
             try:
                 file = open(WORKING_DIR + f'data/loading2.gif', 'rb')
-                self._loading_gif = widgets.Image(value=file.read(), format='gif')
+                self._LOADING_GIF = widgets.Image(value=file.read(), format='gif')
                 file.close()
             except IOError:
                 print('Loading image not found')
@@ -63,11 +63,11 @@ class Dashboard:
         self._estimate.clear_output(wait=True)
         ab_id_start, ab_id_end = self._get_season_range(self._selected_season)
 
-        if self._loading_gif is None:
+        if self._LOADING_GIF is None:
             self._load_loading_gif()
 
         with self._estimate:
-            display.Image(self._loading_gif, height=100)
+            display.Image(self._LOADING_GIF, height=100)
             self._estimate.clear_output(wait=True)
             Dashboard.plot_n_clusters(self.data[self.data.ab_id.between(ab_id_start, ab_id_end)])
 
@@ -77,11 +77,11 @@ class Dashboard:
         self._output.clear_output(wait=True)
         ab_id_start, ab_id_end = self._get_season_range(self._selected_season)
 
-        if self._loading_gif is None:
+        if self._LOADING_GIF is None:
             self._load_loading_gif()
 
         with self._output:
-            display.Image(self._loading_gif, height=100)
+            display.Image(self._LOADING_GIF, height=100)
             self._output.clear_output(wait=True)
             Dashboard.plot_gmm(self.data[self.data.ab_id.between(ab_id_start, ab_id_end)],
                                n_clusters=self._n_clusters, accuracy=self._accuracy)
@@ -93,39 +93,39 @@ class Dashboard:
         # select season data to view
         seasons = sorted(list(self.pitcher.get_seasons()))
         season_select_label = widgets.Label(value='Season:')
-        self._season_select = widgets.RadioButtons(options=seasons, layout={'width': '88px'})
-        seasons_sub_display = widgets.VBox(children=[season_select_label, self._season_select],
+        self._SEASON_SELECT = widgets.RadioButtons(options=seasons, layout={'width': '88px'})
+        seasons_sub_display = widgets.VBox(children=[season_select_label, self._SEASON_SELECT],
                                            layout={'width': ' 150px', 'height': '140px', 'margin': '0 0 0 35px'})
-        self._season_select.observe((lambda s: self._set_selected_season(s.new)), names='value')
-        self._season_select.observe((lambda s: self._display_estimate(s.new)), names='value')
+        self._SEASON_SELECT.observe((lambda s: self._set_selected_season(s.new)), names='value')
+        self._SEASON_SELECT.observe((lambda s: self._display_estimate(s.new)), names='value')
 
         # select number of clusters to calculate
         def label_update(change):
             cluster_select_label.value = f'{change.new}-Clusters'
 
         cluster_select_label = widgets.Label(value=f'{self._n_clusters}-Clusters', layout={'margin': '0 0 0 30px'})
-        self._cluster_select = widgets.IntSlider(min=2, max=7, value=4, readout=False,
+        self._CLUSTER_SELECT = widgets.IntSlider(min=2, max=7, value=4, readout=False,
                                                  layout={'width': '85px', 'margin': '0 0 0 20px'})
-        cluster_sub_display = widgets.VBox(children=[cluster_select_label, self._cluster_select],
+        cluster_sub_display = widgets.VBox(children=[cluster_select_label, self._CLUSTER_SELECT],
                                            layout={'width': '190px', 'height': '75px', 'margin': '0 0 0 0'})
-        self._cluster_select.observe((lambda s: self._set_n_clusters(s.new)), names='value')
-        self._cluster_select.observe(label_update, names='value')
+        self._CLUSTER_SELECT.observe((lambda s: self._set_n_clusters(s.new)), names='value')
+        self._CLUSTER_SELECT.observe(label_update, names='value')
 
         # option to filter data based on accuracy
-        self._accuracy_toggle = widgets.Checkbox(value=False, description='Accuracy',
+        self._ACCURACY_TOGGLE = widgets.Checkbox(value=False, description='Accuracy',
                                                  layout={'width': '190px', 'height': '75px', 'margin': '0 0 0 -65px'})
-        self._accuracy_toggle.observe((lambda s: self._set_accuracy(s.new)), names='value')
+        self._ACCURACY_TOGGLE.observe((lambda s: self._set_accuracy(s.new)), names='value')
 
         # plot results
-        self._render_button = widgets.Button(description='Render', layout={'width': '100px', 'height': '28px',
+        self._RENDER_BUTTON = widgets.Button(description='Render', layout={'width': '100px', 'height': '28px',
                                                                            'margin': '1px 0 1px 10px'})
-        self._render_button.on_click(self._display_gmm)
+        self._RENDER_BUTTON.on_click(self._display_gmm)
 
         controls_layout = widgets.Layout(display='flex', flex_flow='column nowrap', align_content='center',
                                          align_items='flex-start', justify_content='flex-start', width='190px')
 
         return widgets.VBox(layout=controls_layout, children=[seasons_sub_display, cluster_sub_display,
-                                                              self._accuracy_toggle, self._render_button])
+                                                              self._ACCURACY_TOGGLE, self._RENDER_BUTTON])
 
     def _build_output_pane(self):
         return widgets.VBox(children=[self._estimate, self._output],
