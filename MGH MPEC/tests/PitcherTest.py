@@ -27,16 +27,16 @@ class PitcherTest(unittest.TestCase):
 
     # test static methods
     def test_get_h_and_c_scores(self):
-        scores = ((0.0, 1.0),
-                  (0.37, 0.79),
-                  (0.46, 0.75),
-                  (0.86, 0.91),
-                  (0.60, 0.50),
-                  (0.61, 0.47),
-                  (0.86, 0.43),
-                  (0.92, 0.44))
+        scores = ((0.00, 1.00),
+                  (0.01, 0.02),
+                  (0.25, 0.44),
+                  (0.04, 0.04),
+                  (0.08, 0.07),
+                  (0.41, 0.31),
+                  (0.70, 0.53),
+                  (0.29, 0.24))
 
-        x, y = utils.preprocess(test_data)
+        x, y = utils.preprocess(test_data, accuracy=False, confidence=True)
         start = 0
 
         for index, end in enumerate(range(3000, 27000, 3000)):

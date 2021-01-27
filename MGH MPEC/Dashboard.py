@@ -53,7 +53,7 @@ class Dashboard:
         # create local loading_gif resource for output pane
         if self._LOADING_GIF is None:
             try:
-                file = open(WORKING_DIR + f'data/loading2.gif', 'rb')
+                file = open(WORKING_DIR + f'./data/loading2.gif', 'rb')
                 self._LOADING_GIF = widgets.Image(value=file.read(), format='gif')
                 file.close()
             except IOError:
@@ -135,6 +135,7 @@ class Dashboard:
 
     def render_dashboard(self):
         self._display_estimate()
+        self._load_loading_gif()
         return self._dashboard
 
     # Data Processing & Rendering
@@ -245,48 +246,55 @@ class Dashboard:
             :param counts:  (Dictionary) of {Name: Count} pitch counts
             :param opacity: (Float)
         """
-        # ----- PLOT FIGURE -----
-        fig = plt.figure(figsize=(8, 8), facecolor='black')
+        import warnings
 
-        _centers = Dashboard._get_cluster_centers(model, x)
-        _scaled_dot_size = (3 * model.predict_proba(x).max(1) ** 3)
+        # -- current known bug in matplotlib generates warning while attempting to set_yticklabels below
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
 
-        # -- Cluster display
-        ax0 = fig.add_subplot(111, facecolor='black')
-        ax0.scatter(x[:, 0], x[:, 1], c=y, s=_scaled_dot_size, cmap=ListedColormap(PALETTE, N=(int(np.max(y) + 1))))
-        ax0.scatter(_centers[:, 0], _centers[:, 1], s=100, marker='o', color=(1, 0.5, 0.8, 1),
-                    zorder=3, label='Cluster centers')
-        legend = ax0.legend(bbox_to_anchor=(0, 0.01, 0.2, 0.05), framealpha=0, prop={'size': 14, 'weight': 600})
-        ax0.set_ylim((ax0.get_ylim()[0], (np.max(_centers[:, 1]) * 2)))
-        for text in legend.get_texts():
-            plt.setp(text, color='snow')
+            # ----- PLOT FIGURE -----
+            fig = plt.figure(figsize=(8, 8), facecolor='black')
 
-        # -- add Decision Boundaries
-        w_factor = opacity / model.weights_.max()
-        for pos, covar, w in zip(model.means_, model.covariances_, model.weights_):
-            Dashboard._draw_ellipse(pos, covar, ax0, alpha=w * w_factor, color='snow', zorder=2)
+            _centers = Dashboard._get_cluster_centers(model, x)
+            _scaled_dot_size = (3 * model.predict_proba(x).max(1) ** 3)
 
-        # -- Metrics overlay
-        ax1 = fig.add_subplot(331, facecolor=(0, 0, 0, 0))
-        ax1.barh(list(scores.keys()), scores.values(), color=(0.6, 0.6, 0.6, 0.5), alpha=0.55, edgecolor=(0, 0, 0, 0))
-        ax1.tick_params(axis='x', labelsize=0)
-        ax1.set_yticklabels([f'{v:0.2f} - {k}' for k, v in scores.items()], x=0.07,
-                            c='snow', weight=600, ha='left', fontsize=14)
-        ax1.set_position([0, 0.65, 0.98, 0.25])
+            # -- Cluster display
+            ax0 = fig.add_subplot(111, facecolor='black')
+            ax0.scatter(x[:, 0], x[:, 1], c=y, s=_scaled_dot_size, cmap=ListedColormap(PALETTE, N=(int(np.max(y) + 1))))
+            ax0.scatter(_centers[:, 0], _centers[:, 1], s=100, marker='o', color=(1, 0.5, 0.8, 1),
+                        zorder=3, label='Cluster centers')
+            legend = ax0.legend(bbox_to_anchor=(0, 0.01, 0.2, 0.05), framealpha=0, prop={'size': 14, 'weight': 600})
+            ax0.set_ylim((ax0.get_ylim()[0], (np.max(_centers[:, 1]) * 2)))
+            for text in legend.get_texts():
+                plt.setp(text, color='snow')
 
-        # -- Pitch counts overlay
-        ax2 = fig.add_subplot(339, facecolor=(0, 0, 0, 0))
-        ax2.barh(list(counts.keys()), [-1 * x for x in counts.values()], edgecolor=(0, 0, 0, 0),
-                 color=[PALETTE[c] for c in Dashboard._sync_pitch_colors(counts)], alpha=0.65)
-        ax2.set_yticks(np.arange(len(counts)))
-        ax2.set_yticklabels(counts.keys(), c='snow', ha='center', x=0.975, weight=600, fontsize=14)
-        ax2.tick_params(axis='x', labelsize=0)
-        ax2.set_position([0.5, 0.1, 0.5, 0.25])
-        for spine in ['top', 'right', 'bottom', 'left']:
-            ax1.spines[spine].set_visible(False)
-            ax2.spines[spine].set_visible(False)
+            # -- add Decision Boundaries
+            w_factor = opacity / model.weights_.max()
+            for pos, covar, w in zip(model.means_, model.covariances_, model.weights_):
+                Dashboard._draw_ellipse(pos, covar, ax0, alpha=w * w_factor, color='snow', zorder=2)
 
-        plt.show()
+            # -- Metrics overlay
+            ax1 = fig.add_subplot(331, facecolor=(0, 0, 0, 0))
+            ax1.barh(list(scores.keys()), scores.values(), color=(0.6, 0.6, 0.6, 0.5),
+                     alpha=0.55, edgecolor=(0, 0, 0, 0))
+            ax1.tick_params(axis='x', labelsize=0)
+            ax1.set_yticklabels([f'{v:0.2f} - {k}' for k, v in scores.items()], x=0.07,
+                                c='snow', weight=600, ha='left', fontsize=14)
+            ax1.set_position([0, 0.65, 0.98, 0.25])
+
+            # -- Pitch counts overlay
+            ax2 = fig.add_subplot(339, facecolor=(0, 0, 0, 0))
+            ax2.barh(list(counts.keys()), [-1 * x for x in counts.values()], edgecolor=(0, 0, 0, 0),
+                     color=[PALETTE[c] for c in Dashboard._sync_pitch_colors(counts)], alpha=0.65)
+            ax2.set_yticks(np.arange(len(counts)))
+            ax2.set_yticklabels(counts.keys(), c='snow', ha='center', x=0.975, weight=600, fontsize=14)
+            ax2.tick_params(axis='x', labelsize=0)
+            ax2.set_position([0.5, 0.1, 0.5, 0.25])
+            for spine in ['top', 'right', 'bottom', 'left']:
+                ax1.spines[spine].set_visible(False)
+                ax2.spines[spine].set_visible(False)
+
+            plt.show()
 
     @staticmethod
     def plot_gmm(df, n_clusters=None, accuracy=False, xaxis='pfx_x', yaxis='vy0', opacity=0.25):
