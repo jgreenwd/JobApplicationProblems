@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Jeremy Greenwood">
+        <meta name="description" conntent="MGH MPEC Programmer Candidate Project">
+        <meta name="version" content="0.1">
+        <meta name="viewport" content="width=device-width">
+        <title>MGH MPEC Programmer Candidate Project</title>
+        <style>
+            input:not(:checked) + label { opacity: 0.3; }
+            input:checked + label { opacity: 1; }
+        </style>
+    </head>
+
+    <body>
+        <p style="display: flex; 
+                  flex-direction: row; 
+                  justify-content: space-around; 
+                  margin: 20px 25px 0 25px;
+                  width: 400px;">
+            <span>Summary Options:</span>
+            <span>Result:</span>
+        </p>
+        <div style="border: 2px solid darkgrey;
+                    border-radius: 10px;
+                    box-shadow: 10px 10px 20px grey;
+                    margin: 10px 10px 30px 10px;
+                    padding: 10px 20px;
+                    width: 400px;">
+            <div style="display: grid; grid-template-columns:25px 300px 100px;">
+                <input type="checkbox" id="LMoption" name="Life-Months" value="LM">
+                <label for="LMoption">Average number of life-months</label>
+                <span id="LMresult"></span>
+
+                <input type="checkbox" id="CTToption" name="cost per patient" value="CTT">
+                <label for="CTToption">Average cost per patient</label>
+                <span id="CTTresult"></span>
+
+                <input type="checkbox" id="CPYoption" name="cost per year" value="CPY">
+                <label for="CPYoption">Average cost per year of life lived</label>
+                <span id="CPYresult"></span>
+
+                <input type="checkbox" id="AADoption" name="age at death" value="AAD">
+                <label for="AADoption">Average age at death</label>
+                <span id="AADresult"></span>
+            </div>
+        </div>
+
+        <p style="margin: 30px; width: 400px;">
+            <input type="file" id="fileLoader" accept=".out" style="margin: 20px 5px;">
+        </p>
+
+        <button onclick=render() style="width: 400px; margin: 5px 30px;"> Display Summary </button>
+        <br>
+        <button onclick=save() style="width: 400px; margin: 5px 30px;"> Save Results </button>
+
+        <script src="app.js"></script>
+        <script>
+            const fileLoader = document.getElementById('fileLoader');
+            const model = new Model();
+            fileLoader.addEventListener('change', (evt) => { 
+                try {
+                    model.init(evt.target.files[0]); 
+                } catch (err) {
+                    alert(err);
+                }
+            });
+                
+
+            /* ************** VIEW **************** */
+            /*       PAGE DISPLAY ELEMENTS          */
+            /* ************************************ */
+            const LMoption = document.getElementById('LMoption');
+            const CTToption = document.getElementById('CTToption');
+            const CPYoption = document.getElementById('CPYoption');
+            const AADoption = document.getElementById('AADoption');
+            const LMresult = document.getElementById('LMresult');
+            const CTTresult = document.getElementById('CTTresult');
+            const CPYresult = document.getElementById('CPYresult');
+            const AADresult = document.getElementById('AADresult');
+
+            // if user unselects option, reset results display
+            LMoption.addEventListener('change', () => { if (!LMoption.checked) LMresult.innerText = ''; });
+            CTToption.addEventListener('change', () => { if (!CTToption.checked) CTTresult.innerText = ''; });
+            CPYoption.addEventListener('change', () => { if (!CPYoption.checked) CPYresult.innerText = ''; });
+            AADoption.addEventListener('change', () => { if (!AADoption.checked) AADresult.innerText = ''; });
+
+
+            /* *********** CONTROLLER ************* */
+            /*        INTERACTIVE ELEMENTS          */
+            /* ************************************ */
+
+            /*  Calculate & display summary statistics  */
+            function render() {
+                // no file selected
+                if (model.fileIn == null) {
+                    alert('Please select a valid file');
+                    return;
+                }
+
+                // no options selected
+                if (!LMoption.checked && !CTToption.checked && !CPYoption.checked && !AADoption.checked) {
+                    alert('Please select Summary Option(s)');
+                    return;
+                }
+
+                [avgLMs, avgCTT, avgCPY, avgAAD] = model.getAvgs();
+
+                // no data to display
+                if (avgLMs == null || avgCTT == null || avgCPY == null || avgAAD == null) {
+                    alert('Error: Data incomplete/corrupted');
+                    return;
+                }
+
+                LMresult.innerText = LMoption.checked ? `${avgLMs.toFixed(2)}` : '';
+                CTTresult.innerText = CTToption.checked ? `$${avgCTT.toFixed(2)}` : '';
+                CPYresult.innerText = CPYoption.checked ? `$${avgCPY.toFixed(2)}` : '';
+                AADresult.innerText = AADoption.checked ? `${avgAAD.toFixed(2)}` : '';
+            }
+
+            /*  Save summary statistics to a user named .txt file   */
+            async function save() {
+            /*  This function uses the window.showSaveFilePicker() method. At present (4/27/21),
+                this method is experimental and only supported in Chrome and Opera. */
+
+                if (!model.isValidFile) {
+                    alert('Please select a valid file');
+                    return;
+                }
+
+                // if no results displayed, exit
+                if (!LMresult.innerText && !CTTresult.innerText && 
+                    !CPYresult.innerText && !AADresult.innerText) {
+                    return;
+                }
+
+                // pull results from displayed elements
+                try {
+                    const results = `${LMoption.checked ? LMresult.innerText : ''}\n` +
+                                    `${CTToption.checked ? CTTresult.innerText : ''}\n` +
+                                    `${CPYoption.checked ? CPYresult.innerText : ''}\n` +
+                                    `${AADoption.checked ? AADresult.innerText : ''}`;
+
+                    // open save-as window
+                    const fileHandle = await window.showSaveFilePicker({
+                        types: [{
+                            description: 'Text file',
+                            accept: {'text/plain': ['.txt']}
+                        }]
+                    });
+
+                    // write results to file
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(results);
+                    await writable.close();
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        </script>
+    </body>
+</html>
