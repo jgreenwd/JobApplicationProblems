@@ -14,38 +14,32 @@
     </head>
 
     <body>
-        <p style="display: flex; 
-                  flex-direction: row; 
-                  justify-content: space-around; 
-                  margin: 20px 25px 0 25px;
-                  width: 400px;">
-            <span>Summary Options:</span>
-            <span>Result:</span>
-        </p>
-        <div style="border: 2px solid darkgrey;
-                    border-radius: 10px;
-                    box-shadow: 10px 10px 20px grey;
-                    margin: 10px 10px 30px 10px;
-                    padding: 10px 20px;
-                    width: 400px;">
-            <div style="display: grid; grid-template-columns:25px 300px 100px;">
+        <fieldset style="border: 2px solid black; border-radius: 10px; width: 400px">
+            <legend>MGH MPEC Case Study Summary</legend>
+
+            <p style="display: flex; flex-direction: row; justify-content: space-between;">
+                <span>Summary Options:</span>
+                <span>Result:</span>
+            </p>
+            <div style="display: grid; grid-template-columns: 25px 350px 100px;">
                 <input type="checkbox" id="LMoption" name="Life-Months" value="LM">
                 <label for="LMoption">Average number of life-months</label>
                 <span id="LMresult"></span>
-
+    
                 <input type="checkbox" id="CTToption" name="cost per patient" value="CTT">
                 <label for="CTToption">Average cost per patient</label>
                 <span id="CTTresult"></span>
-
+    
                 <input type="checkbox" id="CPYoption" name="cost per year" value="CPY">
                 <label for="CPYoption">Average cost per year of life lived</label>
                 <span id="CPYresult"></span>
-
+    
                 <input type="checkbox" id="AADoption" name="age at death" value="AAD">
                 <label for="AADoption">Average age at death</label>
                 <span id="AADresult"></span>
             </div>
-        </div>
+            
+        </fieldset>
 
         <p style="margin: 30px; width: 400px;">
             <input type="file" id="fileLoader" accept=".out" style="margin: 20px 5px;">
